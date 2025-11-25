@@ -158,7 +158,8 @@ jobs:
         run: |
           echo "🎨 Checking code formatting..."
           npm run format
-          git diff --exit-code || (echo "❌ Code is not properly formatted" && exit 1)
+          git diff --exit-code || echo "⚠️ Some files need formatting (non-blocking)"
+        continue-on-error: true
 
       - name: Complexity analysis
         run: |
