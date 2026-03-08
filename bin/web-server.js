@@ -295,11 +295,11 @@ function getAdminScriptsHTML() {
     pinnwand:{male:i=>i+'\\n\\nShe is not angry\\nShe is overwhelmed\\nSilence is how she resets',
       female:i=>'You are not too much\\n'+i+'\\nYour feelings make sense',
       couple:i=>'Silence is not distance\\n'+i+'\\nSpace can be closeness too'},
-    guide:{male:i=>'If she goes quiet:\\n\\n1. Don\\'t push\\n2. Say "I\\'m here"\\n3. Give space\\n\\nShe will open up when she feels safe',
-      female:i=>'When '+i+'\\n\\n1. Name it gently\\n2. Breathe first\\n3. Come back\\n\\nYou don\\'t owe an explanation',
-      couple:i=>'When '+i+'\\n\\n1. Pause\\n2. Agree to reconnect\\n3. Listen\\n\\nUnderstanding beats winning'},
-    pov:{male:i=>'POV: she goes quiet\\n\\nYou think she\\'s angry\\nShe\\'s overwhelmed\\n\\n'+i,
-      female:i=>'POV: you shut down\\n\\nNot because you don\\'t care\\nBecause you care too much\\n\\n'+i,
+    guide:{male:i=>"If she goes quiet:\\n\\n1. Don't push\\n2. Say I'm here\\n3. Give space\\n\\nShe will open up when she feels safe",
+      female:i=>"When "+i+"\\n\\n1. Name it gently\\n2. Breathe first\\n3. Come back\\n\\nYou don't owe an explanation",
+      couple:i=>"When "+i+"\\n\\n1. Pause\\n2. Agree to reconnect\\n3. Listen\\n\\nUnderstanding beats winning"},
+    pov:{male:i=>"POV: she goes quiet\\n\\nYou think she's angry\\nShe's overwhelmed\\n\\n"+i,
+      female:i=>"POV: you shut down\\n\\nNot because you don't care\\nBecause you care too much\\n\\n"+i,
       couple:i=>'POV: conversation stops\\n\\nNeither of you is wrong\\nBoth overwhelmed\\n\\n'+i}};
   function genHook(type,insight){const t=HOOKS[type],r=t[Math.floor(Math.random()*t.length)];return r.replace('{topic}',insight.split(' ').slice(0,4).join(' '));}
   function fmtLabel(f){return{pinnwand:'Pinnwand',guide:'Mini Guide',pov:'POV'}[f]||f;}
