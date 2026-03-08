@@ -14,6 +14,370 @@ import { compat } from '../runtime-detector.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+function getAdminScriptsHTML() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Engine — /admin/scripts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #21262d;
+      --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950; --purple: #bc8cff; --orange: #d29922;
+      --red: #f85149; --pink: #ff7b72;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
+    header span { font-size: 0.75rem; color: var(--muted);
+      background: var(--border); padding: 2px 8px; border-radius: 12px; }
+    .stats-bar { display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+    .stat { background: var(--surface); padding: 12px 20px; text-align: center; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-top: 2px; }
+    main { display: grid; grid-template-columns: 380px 1fr; gap: 0;
+      height: calc(100vh - 101px); overflow: hidden; }
+    .panel { padding: 20px; overflow-y: auto; }
+    .panel-left { border-right: 1px solid var(--border); }
+    section { margin-bottom: 20px; }
+    label { display: block; font-size: 0.75rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    textarea, input[type=text], select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); padding: 10px 12px;
+      font-size: 0.875rem; font-family: inherit; resize: vertical; }
+    textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent); }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--muted); font-size: 0.75rem; cursor: pointer;
+      transition: all .15s; user-select: none; }
+    .chip.active { border-color: var(--accent); background: rgba(88,166,255,.12); color: var(--accent); }
+    .chip.format-pinnwand.active { border-color: var(--purple); background: rgba(188,140,255,.12); color: var(--purple); }
+    .chip.format-guide.active { border-color: var(--green); background: rgba(63,185,80,.12); color: var(--green); }
+    .chip.format-pov.active { border-color: var(--pink); background: rgba(255,123,114,.12); color: var(--pink); }
+    .chip.hook-secret.active { border-color: #ffa657; background: rgba(255,166,87,.12); color: #ffa657; }
+    .chip.hook-conflict.active { border-color: var(--red); background: rgba(248,81,73,.12); color: var(--red); }
+    .chip.hook-pov.active { border-color: var(--purple); background: rgba(188,140,255,.12); color: var(--purple); }
+    .chip.hook-list.active { border-color: var(--green); background: rgba(63,185,80,.12); color: var(--green); }
+    .chip.hook-emotion.active { border-color: var(--pink); background: rgba(255,123,114,.12); color: var(--pink); }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+      border-radius: 6px; border: none; font-size: 0.875rem; font-weight: 500;
+      cursor: pointer; transition: opacity .15s; }
+    .btn-primary { background: var(--accent); color: #0d1117; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: rgba(248,81,73,.15); color: var(--red); border: 1px solid var(--red); }
+    .btn:hover { opacity: 0.85; } .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .tab { padding: 10px 16px; font-size: 0.8rem; cursor: pointer; color: var(--muted);
+      border-bottom: 2px solid transparent; transition: all .15s; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .scripts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .script-card { background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px; }
+    .script-card:hover { border-color: var(--accent); }
+    .card-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 10px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .badge-format-pinnwand { background: rgba(188,140,255,.2); color: var(--purple); }
+    .badge-format-guide { background: rgba(63,185,80,.2); color: var(--green); }
+    .badge-format-pov { background: rgba(255,123,114,.2); color: var(--pink); }
+    .badge-male { background: rgba(88,166,255,.2); color: var(--accent); }
+    .badge-female { background: rgba(255,166,87,.2); color: #ffa657; }
+    .badge-couple { background: rgba(63,185,80,.2); color: var(--green); }
+    .script-hook { font-size: 0.7rem; color: var(--muted); margin-bottom: 8px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .script-hook strong { color: var(--orange); }
+    .script-body { font-size: 0.825rem; line-height: 1.6; white-space: pre-wrap; }
+    .card-actions { display: flex; gap: 6px; margin-top: 12px; }
+    .card-actions .btn { padding: 5px 10px; font-size: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th { text-align: left; padding: 8px 12px; color: var(--muted);
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .perf-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .perf-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .4s; }
+    .multiplier { background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .mult-row { display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px dotted var(--border); font-size: 0.8rem; }
+    .mult-row:last-child { border-bottom: none; }
+    .mult-val { font-weight: 700; color: var(--accent); }
+    .total-val { font-size: 1.4rem; font-weight: 800; color: var(--green); }
+    .spinner { display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.2); border-top-color: #fff;
+      border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px;
+      font-size: 0.825rem; transform: translateY(80px); opacity: 0;
+      transition: all .25s; z-index: 999; max-width: 320px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--green); } #toast.error { border-color: var(--red); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-state p { font-size: 0.875rem; margin-top: 12px; }
+    .accounts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .account-card { background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px; text-align: center; }
+    .account-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .account-name { font-weight: 600; font-size: 0.875rem; margin-bottom: 4px; }
+    .account-posts { font-size: 0.75rem; color: var(--muted); }
+    .account-bar { margin-top: 10px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>&#9889; Content Engine</h1>
+  <span>/admin/scripts</span>
+  <span id="queue-count" style="margin-left:auto">Queue: 0</span>
+</header>
+<div class="stats-bar">
+  <div class="stat"><div class="stat-val" id="s-insights">0</div><div class="stat-lbl">Insights</div></div>
+  <div class="stat"><div class="stat-val" id="s-scripts">0</div><div class="stat-lbl">Scripts</div></div>
+  <div class="stat"><div class="stat-val" id="s-formats">3</div><div class="stat-lbl">Formats</div></div>
+  <div class="stat"><div class="stat-val" id="s-perspectives">3</div><div class="stat-lbl">Perspectives</div></div>
+  <div class="stat"><div class="stat-val" id="s-hooks">5</div><div class="stat-lbl">Hook Types</div></div>
+</div>
+<main>
+  <div class="panel panel-left">
+    <section>
+      <label>SEO Insight / Topic</label>
+      <textarea id="insight-input" rows="4" placeholder="e.g. silence often means emotional overwhelm"></textarea>
+    </section>
+    <section>
+      <label>Formats</label>
+      <div class="chip-group">
+        <span class="chip format-pinnwand active" data-group="format" data-val="pinnwand">Pinnwand</span>
+        <span class="chip format-guide active" data-group="format" data-val="guide">Mini Guide</span>
+        <span class="chip format-pov active" data-group="format" data-val="pov">POV</span>
+      </div>
+    </section>
+    <section>
+      <label>Perspectives</label>
+      <div class="chip-group">
+        <span class="chip active" data-group="perspective" data-val="male">Male</span>
+        <span class="chip active" data-group="perspective" data-val="female">Female</span>
+        <span class="chip active" data-group="perspective" data-val="couple">Couple</span>
+      </div>
+    </section>
+    <section>
+      <label>Hook Types</label>
+      <div class="chip-group">
+        <span class="chip hook-secret active" data-group="hook" data-val="secret">Secret</span>
+        <span class="chip hook-conflict active" data-group="hook" data-val="conflict">Conflict</span>
+        <span class="chip hook-pov active" data-group="hook" data-val="pov">POV</span>
+        <span class="chip hook-list active" data-group="hook" data-val="list">List</span>
+        <span class="chip hook-emotion active" data-group="hook" data-val="emotion">Emotion</span>
+      </div>
+    </section>
+    <section>
+      <label>Multiplier Preview</label>
+      <div class="multiplier">
+        <div class="mult-row"><span>Formats selected</span><span class="mult-val" id="m-formats">3</span></div>
+        <div class="mult-row"><span>Perspectives</span><span class="mult-val" id="m-persp">3</span></div>
+        <div class="mult-row"><span>Hook variants</span><span class="mult-val" id="m-hooks">5</span></div>
+        <div class="mult-row"><span>Scripts per insight</span><span class="mult-val" id="m-scripts">9</span></div>
+        <div class="mult-row"><span>Videos per insight</span><span class="mult-val" id="m-videos">45</span></div>
+        <div class="mult-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px">
+          <span>100 Insights &rarr; Videos</span><span class="total-val" id="m-total">4,500</span>
+        </div>
+      </div>
+    </section>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-generate">&#9733; Generate Scripts</button>
+      <button class="btn btn-secondary" id="btn-clear-queue">Clear Queue</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs">
+      <div class="tab active" data-tab="scripts">Scripts</div>
+      <div class="tab" data-tab="queue">Queue</div>
+      <div class="tab" data-tab="performance">Hook Performance</div>
+      <div class="tab" data-tab="scheduler">Scheduler</div>
+    </div>
+
+    <div class="tab-content active" id="tab-scripts">
+      <div id="scripts-container">
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>
+          <p>Enter an insight and click Generate Scripts</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-queue">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-secondary" id="btn-export">Export JSON</button>
+        <button class="btn btn-danger" id="btn-clear-all">Clear All</button>
+      </div>
+      <table><thead><tr><th>#</th><th>Hook</th><th>Format</th><th>Perspective</th><th>Account</th><th>Post Time</th><th>Action</th></tr></thead>
+      <tbody id="queue-body"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px">Queue is empty</td></tr></tbody></table>
+    </div>
+
+    <div class="tab-content" id="tab-performance">
+      <table><thead><tr><th>Hook</th><th>Type</th><th>Views</th><th>Saves</th><th>Completion</th><th>Score</th></tr></thead>
+      <tbody id="perf-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">No performance data yet</td></tr></tbody></table>
+    </div>
+
+    <div class="tab-content" id="tab-scheduler">
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:16px">3 accounts &times; 3 posts/day = 9 videos daily</p>
+      <div class="accounts-grid">
+        <div class="account-card">
+          <div class="account-icon">&#9794;</div>
+          <div class="account-name" style="color:var(--accent)">@male_account</div>
+          <div class="account-posts" id="male-posts">0 queued</div>
+          <div class="account-bar" id="male-bar"><div class="perf-bar"><div class="perf-fill" style="width:0%"></div></div></div>
+        </div>
+        <div class="account-card">
+          <div class="account-icon">&#9792;</div>
+          <div class="account-name" style="color:#ffa657">@female_account</div>
+          <div class="account-posts" id="female-posts">0 queued</div>
+          <div class="account-bar" id="female-bar"><div class="perf-bar"><div class="perf-fill" style="width:0%"></div></div></div>
+        </div>
+        <div class="account-card">
+          <div class="account-icon">&#9825;</div>
+          <div class="account-name" style="color:var(--green)">@couple_account</div>
+          <div class="account-posts" id="couple-posts">0 queued</div>
+          <div class="account-bar" id="couple-bar"><div class="perf-bar"><div class="perf-fill" style="width:0%"></div></div></div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <label style="margin-bottom:10px">Daily Format Mix (Recommended)</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div class="multiplier" style="text-align:center"><div class="stat-val" style="color:var(--purple)">4</div><div class="stat-lbl">Pinnwand</div></div>
+          <div class="multiplier" style="text-align:center"><div class="stat-val" style="color:var(--green)">3</div><div class="stat-lbl">Mini Guide</div></div>
+          <div class="multiplier" style="text-align:center"><div class="stat-val" style="color:var(--pink)">2</div><div class="stat-lbl">POV</div></div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <label style="margin-bottom:8px">Scheduled Queue</label>
+        <table><thead><tr><th>Account</th><th>Format</th><th>Hook</th><th>Time</th></tr></thead>
+        <tbody id="sched-body"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:40px">No scripts queued</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</main>
+<div id="toast"></div>
+
+<script>
+(function(){
+  let scripts=[],queue=[],perfData={},insightCount=0;
+  function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;setTimeout(()=>{t.className='';},3000);}
+  function getSelected(g){return[...document.querySelectorAll('.chip[data-group="'+g+'"].active')].map(c=>c.dataset.val);}
+  document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{c.classList.toggle('active');updateMult();}));
+  function updateMult(){const f=getSelected('format').length,p=getSelected('perspective').length,h=getSelected('hook').length,s=f*p,v=s*h;
+    document.getElementById('m-formats').textContent=f;document.getElementById('m-persp').textContent=p;
+    document.getElementById('m-hooks').textContent=h;document.getElementById('m-scripts').textContent=s;
+    document.getElementById('m-videos').textContent=v;document.getElementById('m-total').textContent=(100*v).toLocaleString();}
+  updateMult();
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');document.getElementById('tab-'+t.dataset.tab).classList.add('active');}));
+  const HOOKS={secret:['Nobody talks about this part of relationships','This is the secret nobody tells you'],
+    conflict:['Why this confuses most people','This is where couples get it wrong'],
+    pov:['POV: {topic}','POV: you finally understand {topic}'],
+    list:['3 things {topic} actually means','5 signs you need to know'],
+    emotion:['This hit different','Men need to hear this']};
+  const BODIES={
+    pinnwand:{male:i=>i+'\\n\\nShe is not angry\\nShe is overwhelmed\\nSilence is how she resets',
+      female:i=>'You are not too much\\n'+i+'\\nYour feelings make sense',
+      couple:i=>'Silence is not distance\\n'+i+'\\nSpace can be closeness too'},
+    guide:{male:i=>'If she goes quiet:\\n\\n1. Don\\'t push\\n2. Say "I\\'m here"\\n3. Give space\\n\\nShe will open up when she feels safe',
+      female:i=>'When '+i+'\\n\\n1. Name it gently\\n2. Breathe first\\n3. Come back\\n\\nYou don\\'t owe an explanation',
+      couple:i=>'When '+i+'\\n\\n1. Pause\\n2. Agree to reconnect\\n3. Listen\\n\\nUnderstanding beats winning'},
+    pov:{male:i=>'POV: she goes quiet\\n\\nYou think she\\'s angry\\nShe\\'s overwhelmed\\n\\n'+i,
+      female:i=>'POV: you shut down\\n\\nNot because you don\\'t care\\nBecause you care too much\\n\\n'+i,
+      couple:i=>'POV: conversation stops\\n\\nNeither of you is wrong\\nBoth overwhelmed\\n\\n'+i}};
+  function genHook(type,insight){const t=HOOKS[type],r=t[Math.floor(Math.random()*t.length)];return r.replace('{topic}',insight.split(' ').slice(0,4).join(' '));}
+  function fmtLabel(f){return{pinnwand:'Pinnwand',guide:'Mini Guide',pov:'POV'}[f]||f;}
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function postTime(i){return['09:00','12:00','18:00','21:00'][i%4];}
+  document.getElementById('btn-generate').addEventListener('click',()=>{
+    const insight=document.getElementById('insight-input').value.trim();
+    if(!insight){toast('Enter an insight first','error');return;}
+    const formats=getSelected('format'),perspectives=getSelected('perspective'),hooks=getSelected('hook');
+    if(!formats.length||!perspectives.length||!hooks.length){toast('Select at least one from each group','error');return;}
+    const btn=document.getElementById('btn-generate');
+    btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Generating\u2026';
+    const newS=[];
+    for(const f of formats)for(const p of perspectives)for(const h of hooks){
+      const body=(BODIES[f]&&BODIES[f][p])?BODIES[f][p](insight):insight;
+      newS.push({format:f,perspective:p,hookType:h,hook:genHook(h,insight),body,insight});}
+    scripts=[...scripts,...newS];insightCount++;
+    document.getElementById('s-insights').textContent=insightCount;
+    document.getElementById('s-scripts').textContent=scripts.length;
+    newS.forEach((s,i)=>queue.push({id:Date.now()+i,hook:s.hook,format:s.format,perspective:s.perspective,
+      account:s.perspective+'_account',postTime:postTime(queue.length+i),script:s.body,hookType:s.hookType}));
+    document.getElementById('queue-count').textContent='Queue: '+queue.length;
+    renderScripts(newS);renderQueue();renderScheduler();
+    setTimeout(()=>{btn.disabled=false;btn.innerHTML='&#9733; Generate Scripts';toast('Generated '+newS.length+' scripts');},400);});
+  function renderScripts(list){
+    const c=document.getElementById('scripts-container');
+    const g=document.createElement('div');g.className='scripts-grid';
+    list.forEach(s=>{const d=document.createElement('div');d.className='script-card';
+      d.innerHTML='<div class="card-meta"><span class="badge badge-format-'+s.format+'">'+fmtLabel(s.format)+'</span>'+
+        '<span class="badge badge-'+s.perspective+'">'+s.perspective+'</span>'+
+        '<span class="badge" style="background:rgba(200,200,200,.1);color:var(--muted)">'+s.hookType+'</span></div>'+
+        '<div class="script-hook">Hook: <strong>'+esc(s.hook)+'</strong></div>'+
+        '<div class="script-body">'+esc(s.body)+'</div>'+
+        '<div class="card-actions"><button class="btn btn-secondary" onclick="copyS(this,'+JSON.stringify(esc(s.hook+'\\n\\n'+s.body))+')">Copy</button>'+
+        '<button class="btn btn-primary" onclick="trackH('+JSON.stringify(s.hookType)+','+JSON.stringify(s.hook)+')">Track</button></div>';
+      g.appendChild(d);});
+    if(c.querySelector('.empty-state'))c.innerHTML='';c.prepend(g);}
+  window.copyS=function(btn,text){navigator.clipboard.writeText(text.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'));btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);};
+  window.trackH=function(type,hook){if(!perfData[hook])perfData[hook]={type,hook,views:0,saves:0,completion:0};
+    const d=perfData[hook];d.views+=Math.floor(Math.random()*8000+2000);d.saves+=Math.floor(Math.random()*500+100);
+    d.completion=Math.round(Math.random()*40+50);renderPerf();toast('Hook tracked');};
+  function renderPerf(){const tbody=document.getElementById('perf-body');
+    const rows=Object.values(perfData).sort((a,b)=>b.views-a.views);if(!rows.length)return;
+    const mx=Math.max(...rows.map(r=>r.views));
+    tbody.innerHTML=rows.map(r=>'<tr><td style="max-width:160px;font-size:.75rem">'+esc(r.hook)+'</td>'+
+      '<td><span class="badge" style="background:rgba(200,200,200,.1);color:var(--muted)">'+r.type+'</span></td>'+
+      '<td>'+r.views.toLocaleString()+'</td><td>'+r.saves.toLocaleString()+'</td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px"><div class="perf-bar" style="flex:1"><div class="perf-fill" style="width:'+r.completion+'%;background:var(--green)"></div></div><span style="font-size:.75rem">'+r.completion+'%</span></div></td>'+
+      '<td><div style="display:flex;align-items:center;gap:8px"><div class="perf-bar" style="flex:1"><div class="perf-fill" style="width:'+Math.round(r.views/mx*100)+'%"></div></div><span style="font-size:.75rem;color:var(--accent)">'+Math.round(r.views/mx*100)+'</span></div></td></tr>').join('');}
+  function renderQueue(){const tbody=document.getElementById('queue-body');
+    if(!queue.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px">Queue is empty</td></tr>';return;}
+    tbody.innerHTML=queue.map((item,i)=>'<tr><td style="color:var(--muted)">'+(i+1)+'</td>'+
+      '<td style="font-size:.75rem;max-width:160px">'+esc(item.hook)+'</td>'+
+      '<td><span class="badge badge-format-'+item.format+'">'+fmtLabel(item.format)+'</span></td>'+
+      '<td><span class="badge badge-'+item.perspective+'">'+item.perspective+'</span></td>'+
+      '<td style="font-size:.75rem;color:var(--muted)">@'+item.account+'</td>'+
+      '<td style="font-size:.75rem">'+item.postTime+'</td>'+
+      '<td><button class="btn btn-danger" style="padding:3px 8px;font-size:.7rem" onclick="rmQ('+item.id+')">Remove</button></td></tr>').join('');}
+  window.rmQ=function(id){queue=queue.filter(q=>q.id!==id);document.getElementById('queue-count').textContent='Queue: '+queue.length;renderQueue();renderScheduler();};
+  function renderScheduler(){
+    ['male','female','couple'].forEach(p=>{const acc=p+'_account';const items=queue.filter(q=>q.account===acc);
+      document.getElementById(p+'-posts').textContent=items.length+' queued';
+      const pct=Math.min(100,Math.round(items.length/3*100));
+      document.getElementById(p+'-bar').innerHTML='<div class="perf-bar"><div class="perf-fill" style="width:'+pct+'%"></div></div>';});
+    const tbody=document.getElementById('sched-body');
+    if(!queue.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:40px">No scripts queued</td></tr>';return;}
+    tbody.innerHTML=queue.map(q=>'<tr><td style="font-size:.75rem;color:var(--muted)">@'+q.account+'</td>'+
+      '<td><span class="badge badge-format-'+q.format+'">'+fmtLabel(q.format)+'</span></td>'+
+      '<td style="font-size:.75rem;max-width:150px">'+esc(q.hook)+'</td>'+
+      '<td style="font-size:.75rem">'+q.postTime+'</td></tr>').join('');}
+  document.getElementById('btn-clear-queue').addEventListener('click',()=>{queue=[];document.getElementById('queue-count').textContent='Queue: 0';renderQueue();renderScheduler();toast('Queue cleared');});
+  document.getElementById('btn-export').addEventListener('click',()=>{const b=new Blob([JSON.stringify(queue,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='content-queue-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Exported '+queue.length+' items');});
+  document.getElementById('btn-clear-all').addEventListener('click',()=>{queue=[];document.getElementById('queue-count').textContent='Queue: 0';renderQueue();renderScheduler();toast('Queue cleared');});
+})();
+</script>
+</body></html>`;
+}
+
 export class ClaudeCodeWebServer {
   constructor(port = 3000) {
     this.port = port;
@@ -75,6 +439,38 @@ export class ClaudeCodeWebServer {
       app.get('/', (req, res) => {
         res.redirect('/console');
       });
+
+      // ── TikTok Content Engine UI ────────────────────────────────────────────
+      app.get('/admin/scripts', (req, res) => {
+        res.send(getAdminScriptsHTML());
+      });
+
+      app.post('/admin/scripts/api/generate', express.json(), (req, res) => {
+        const { insight, formats = ['pinnwand','guide','pov'],
+                perspectives = ['male','female','couple'],
+                hookTypes = ['secret','conflict','pov','list','emotion'] } = req.body || {};
+        if (!insight) return res.status(400).json({ error: 'insight is required' });
+        const hookTemplates = {
+          secret: ['Nobody talks about this part of relationships','This is the secret nobody tells you'],
+          conflict: ['Why this confuses most people','This is where couples get it wrong'],
+          pov: ['POV: {topic}','POV: you finally understand {topic}'],
+          list: ['3 things {topic} actually means','5 signs you need to know'],
+          emotion: ['This hit different','Men need to hear this'],
+        };
+        const scripts = [];
+        for (const format of formats) for (const perspective of perspectives) for (const hookType of hookTypes) {
+          const hooks = hookTemplates[hookType] || [];
+          const hook = (hooks[Math.floor(Math.random() * hooks.length)] || '')
+            .replace('{topic}', insight.split(' ').slice(0, 4).join(' '));
+          scripts.push({ format, perspective, hookType, hook, insight,
+            account: perspective + '_account', generatedAt: new Date().toISOString() });
+        }
+        res.json({ scripts, count: scripts.length,
+          multiplier: { formats: formats.length, perspectives: perspectives.length,
+            hookTypes: hookTypes.length, scriptsPerInsight: formats.length * perspectives.length,
+            videosPerInsight: formats.length * perspectives.length * hookTypes.length } });
+      });
+      // ───────────────────────────────────────────────────────────────────────
 
       this.server = createServer(app);
 
